@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>網頁程式設計課程 - 作品集闖關地圖</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b132b;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(28, 37, 65, 0.8) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(11, 19, 43, 0.9) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(0, 180, 216, 0.15) 0px, transparent 70%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        /* 玻璃擬物 Glassmorphic 效果 */
+        .glass-card {
+            background: rgba(28, 37, 65, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 180, 216, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* 已解鎖卡片 Hover 效果 */
+        .unlocked-card {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .unlocked-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            border-color: rgba(72, 202, 228, 0.8);
+            box-shadow: 0 0 20px rgba(0, 180, 216, 0.5), inset 0 0 15px rgba(0, 180, 216, 0.2);
+        }
+
+        /* 掃光效果 (Shimmer Effect) */
+        .unlocked-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.15),
+                transparent
+            );
+            transition: 0.6s;
+            transform: skewX(-25deg);
+        }
+
+        .unlocked-card:hover::before {
+            left: 150%;
+        }
+
+        /* 未解鎖卡片 Hover 效果 (禁止/搖晃感) */
+        .locked-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.25s ease;
+            cursor: not-allowed;
+        }
+
+        .locked-card:hover {
+            border-color: rgba(239, 68, 68, 0.4);
+            background: rgba(30, 41, 59, 0.7);
+            animation: shake 0.4s ease-in-out;
+        }
+
+        .locked-card:hover .lock-icon {
+            transform: scale(1.2) rotate(12deg);
+            transition: transform 0.2s ease;
+        }
+
+        /* 搖晃動畫 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-4px) rotate(-1deg); }
+            40% { transform: translateX(4px) rotate(1deg); }
+            60% { transform: translateX(-2px); }
+            80% { transform: translateX(2px); }
+        }
+
+        /* 大頭貼動態呼吸光環 */
+        .avatar-glow {
+            position: relative;
+        }
+
+        .avatar-glow::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 9999px;
+            background: linear-gradient(45deg, #00b4d8, #0077b6, #90e0ef);
+            z-index: -1;
+            filter: blur(8px);
+            opacity: 0.75;
+            animation: pulse-glow 3s infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            0% { opacity: 0.5; filter: blur(6px); transform: scale(0.98); }
+            100% { opacity: 0.9; filter: blur(12px); transform: scale(1.02); }
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col justify-between p-4 sm:p-6 md:p-10">
+
+    <!-- Header / Profile 區塊 -->
+    <header class="max-w-4xl mx-auto w-full text-center mt-4 mb-8 sm:mb-12">
+        <div class="relative inline-block mb-4">
+            <div class="avatar-glow">
+                <img 
+                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300&auto=format&fit=crop" 
+                    alt="個人大頭貼" 
+                    class="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-2 border-cyan-400 shadow-2xl mx-auto"
+                    onerror="this.src='https://placehold.co/128x128/0077b6/ffffff?text=Avatar'"
+                >
+            </div>
+            <span class="absolute bottom-1 right-1 bg-cyan-500 text-slate-950 font-bold text-xs px-2.5 py-0.5 rounded-full border border-slate-900 shadow">
+                LV. 16
+            </span>
+        </div>
+
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-400 to-indigo-300 mb-2">
+            我的作品集 / Student Name
+        </h1>
+        <p class="text-sm sm:text-base text-cyan-200/80 font-medium tracking-wide max-w-md mx-auto">
+            🚀 網頁程式設計課程闖關地圖
+        </p>
+
+        <!-- 進度條條示 -->
+        <div class="mt-6 max-w-xs mx-auto glass-card p-2.5 rounded-2xl">
+            <div class="flex justify-between text-xs font-semibold text-cyan-300 mb-1.5 px-1">
+                <span>闖關進度</span>
+                <span>2 / 16 完成</span>
+            </div>
+            <div class="w-full bg-slate-800/80 rounded-full h-2.5 overflow-hidden p-0.5 border border-cyan-500/20">
+                <div class="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(0,180,216,0.8)]" style="width: 12.5%"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Section: 16 個任務關卡卡片 -->
+    <main class="max-w-6xl mx-auto w-full flex-grow mb-10">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+
+            <!-- Week 1 (已解鎖) -->
+            <a href="w1/index.html" class="unlocked-card glass-card p-5 rounded-2xl flex flex-col justify-between group">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-cyan-400 bg-cyan-950/80 border border-cyan-500/30 px-2.5 py-1 rounded-lg">
+                        WEEK 01
+                    </span>
+                    <span class="inline-flex items-center text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+                        已解鎖
+                    </span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors duration-200">
+                        Week1 - 數位名片
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1">個人簡介與 HTML/CSS 基礎練習</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs font-medium text-cyan-400 group-hover:translate-x-1 transition-transform duration-200">
+                    <span>進入關卡</span>
+                    <span>➔</span>
+                </div>
+            </a>
+
+            <!-- Week 2 (已解鎖) -->
+            <a href="w2/index.html" class="unlocked-card glass-card p-5 rounded-2xl flex flex-col justify-between group">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-cyan-400 bg-cyan-950/80 border border-cyan-500/30 px-2.5 py-1 rounded-lg">
+                        WEEK 02
+                    </span>
+                    <span class="inline-flex items-center text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+                        已解鎖
+                    </span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors duration-200">
+                        Week2 - 今天吃甚麼？
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1">互動式選擇器與 JavaScript 應用</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs font-medium text-cyan-400 group-hover:translate-x-1 transition-transform duration-200">
+                    <span>進入關卡</span>
+                    <span>➔</span>
+                </div>
+            </a>
+
+            <!-- Week 3 ~ 16 (未解鎖) -->
+            <!-- JavaScript 會動態建立或是直接使用純 HTML 結構以方便調整 -->
+            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">
+                        WEEK 03
+                    </span>
+                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-slate-400">
+                        Week 3 - 未解鎖
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
+                    <span>鎖定中</span>
+                    <span>--</span>
+                </div>
+            </div>
+
+            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 04</span>
+                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-slate-400">Week 4 - 未解鎖</h3>
+                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
+                    <span>鎖定中</span><span>--</span>
+                </div>
+            </div>
+
+            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 05</span>
+                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-slate-400">Week 5 - 未解鎖</h3>
+                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
+                    <span>鎖定中</span><span>--</span>
+                </div>
+            </div>
+
+            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 06</span>
+                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-slate-400">Week 6 - 未解鎖</h3>
+                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
+                    <span>鎖定中</span><span>--</span>
+                </div>
+            </div>
+
+            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 07</span>
+                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-slate-400">Week 7 - 未解鎖</h3>
+                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
+                    <span>鎖定中</span><span>--</span>
+                </div>
+            </div>
+
+            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 08</span>
+                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-slate-400">Week 8 - 未解鎖</h3>
+                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
+                    <span>鎖定中</span><span>--</span>
+                </div>
+            </div>
+
+            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 09</span>
+                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-slate-400">Week 9 - 未解鎖</h3>
+                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
+                    <span>鎖定中</span><span>--</span>
+                </div>
+            </div>
+
+            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 10</span>
+                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-slate-400">Week 10 - 未解鎖</h3>
+                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
+                    <span>鎖定中</span><span>--</span>
+                </div>
+            </div>
+
+            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 11</span>
+                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-slate-400">Week 11 - 未解鎖</h3>
+                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
+                    <span>鎖定中</span><span>--</span>
+                </div>
+            </div>
+
+            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 12</span>
+                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-slate-400">Week 12 - 未解鎖</h3>
+                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
+                    <span>鎖定中</span><span>--</span>
+                </div>
+            </div>
+
+            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 13</span>
+                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-slate-400">Week 13 - 未解鎖</h3>
+                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
+                    <span>鎖定中</span><span>--</span>
+                </div>
+            </div>
+
+            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 14</span>
+                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-slate-400">Week 14 - 未解鎖</h3>
+                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
+                    <span>鎖定中</span><span>--</span>
+                </div>
+            </div>
+
+            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 15</span>
+                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-slate-400">Week 15 - 未解鎖</h3>
+                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
+                    <span>鎖定中</span><span>--</span>
+                </div>
+            </div>
+
+            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 16</span>
+                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-slate-400">Week 16 - 期末專題</h3>
+                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">               
+                  <span>鎖定中</span><span>--</span>
+                </div>
+            </div>
+
+        </div>
+    </main>
