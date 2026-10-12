@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Montserrat & Noto Sans TC & Impact-like style -->
+    <!-- Google Fonts: Montserrat & Noto Sans TC -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,700;0,900;1,900&family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet">
     <!-- html2canvas for downloading meme -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -134,7 +134,7 @@
                     <div class="space-y-1.5">
                         <label class="text-xs font-bold text-slate-300 flex justify-between">
                             <span>上方文字 (Top Text)</span>
-                            <span id="top-char-count" class="text-slate-500 text-[10px]">0/50</span>
+                            <span id="top-char-count" class="text-slate-500 text-[10px]">10/50</span>
                         </label>
                         <input type="text" id="top-text-input" maxlength="50" placeholder="例如：當你以為DDL還很久..." 
                             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition">
@@ -144,7 +144,7 @@
                     <div class="space-y-1.5">
                         <label class="text-xs font-bold text-slate-300 flex justify-between">
                             <span>下方文字 (Bottom Text)</span>
-                            <span id="bottom-char-count" class="text-slate-500 text-[10px]">0/50</span>
+                            <span id="bottom-char-count" class="text-slate-500 text-[10px]">10/50</span>
                         </label>
                         <input type="text" id="bottom-text-input" maxlength="50" placeholder="例如：結果明天就要交作業" 
                             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition">
@@ -205,16 +205,16 @@
                 <!-- Meme Canvas Container to Export -->
                 <div id="meme-canvas-wrapper" class="relative w-full aspect-square bg-slate-950 rounded-xl overflow-hidden border border-slate-800 shadow-inner flex items-center justify-center group">
                     <!-- Background Image -->
-                    <img id="meme-image" src="https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800&auto=format&fit=crop" alt="Meme Base" class="w-full h-full object-cover">
+                    <img id="meme-image" crossorigin="anonymous" src="https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800&auto=format&fit=crop" alt="Meme Base" class="w-full h-full object-cover">
                     
                     <!-- Top Text Overlay -->
-                    <div id="preview-top-text" class="meme-text absolute top-4 left-4 right-4 text-center px-2 break-words drop-shadow-md">
-                        這是一行上方文字
+                    <div id="preview-top-text" class="meme-text absolute top-4 left-4 right-4 text-center px-2 break-words drop-shadow-md" style="font-size: 32px;">
+                        當你以為DDL還很久
                     </div>
 
                     <!-- Bottom Text Overlay -->
-                    <div id="preview-bottom-text" class="meme-text absolute bottom-4 left-4 right-4 text-center px-2 break-words drop-shadow-md">
-                        這是一行下方文字
+                    <div id="preview-bottom-text" class="meme-text absolute bottom-4 left-4 right-4 text-center px-2 break-words drop-shadow-md" style="font-size: 32px;">
+                        結果明天就要交作業
                     </div>
 
                     <!-- Watermark -->
@@ -292,11 +292,11 @@
         // Initialize preset buttons
         function initPresets() {
             presetContainer.innerHTML = '';
-            presetImages.forEach((preset, index) => {
+            presetImages.forEach((preset) => {
                 const btn = document.createElement('button');
                 btn.className = "flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 border-slate-700 hover:border-purple-500 focus:outline-none transition group relative";
                 btn.innerHTML = `
-                    <img src="${preset.url}" alt="${preset.name}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
+                    <img src="${preset.url}" alt="${preset.name}" crossorigin="anonymous" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
                     <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-[10px] font-bold text-white px-1 text-center">
                         ${preset.name}
                     </div>
@@ -408,7 +408,6 @@
             previewBottomText.textContent = randomItem.bottom;
             bottomCharCount.textContent = `${randomItem.bottom.length}/50`;
 
-            // Also pick a random preset image
             const randomPreset = presetImages[Math.floor(Math.random() * presetImages.length)];
             memeImage.src = randomPreset.url;
 
@@ -422,11 +421,12 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-lg"></i><span>正在合成迷因...</span>`;
             btn.disabled = true;
 
-            // Ensure image is fully loaded or crossOrigin handled
+            memeImage.crossOrigin = "anonymous";
+
             html2canvas(memeCanvasWrapper, {
                 useCORS: true,
                 allowTaint: true,
-                scale: 2, // High resolution output
+                scale: 2,
                 backgroundColor: null
             }).then(canvas => {
                 const link = document.createElement('a');
@@ -459,6 +459,23 @@
                 toastIcon.className = "w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs";
                 toastIcon.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i>`;
             } else {
-              
-        </div>
-    </main>
+                toastIcon.className = "w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs";
+                toastIcon.innerHTML = `<i class="fa-solid fa-check"></i>`;
+            }
+
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 3000);
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            initPresets();
+            topTextInput.value = "當你以為DDL還很久";
+            bottomTextInput.value = "結果明天就要交作業";
+        });
+    </script>
+</body>
+</html>
