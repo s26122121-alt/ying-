@@ -1,413 +1,464 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>網頁程式設計課程 - 作品集闖關地圖</title>
+    <title>作業產生器 - 自定義迷因 (Meme) 產生器</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Montserrat & Noto Sans TC & Impact-like style -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,700;0,900;1,900&family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet">
+    <!-- html2canvas for downloading meme -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        meme: ['"Montserrat"', '"Noto Sans TC"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fdf4ff',
+                            500: '#a855f7',
+                            600: '#9333ea',
+                            700: '#7e22ce',
+                            dark: '#0f172a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0b132b;
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(28, 37, 65, 0.8) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(11, 19, 43, 0.9) 0px, transparent 50%),
-                radial-gradient(at 50% 50%, rgba(0, 180, 216, 0.15) 0px, transparent 70%);
-            background-attachment: fixed;
-            min-height: 100vh;
+        .meme-text {
+            font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #ffffff;
+            text-shadow: 
+                -3px -3px 0 #000,  
+                 3px -3px 0 #000,
+                -3px  3px 0 #000,
+                 3px  3px 0 #000,
+                0px 4px 10px rgba(0,0,0,0.8);
+            letter-spacing: 0.05em;
+            word-break: break-all;
+            user-select: none;
         }
-
-        /* 玻璃擬物 Glassmorphic 效果 */
-        .glass-card {
-            background: rgba(28, 37, 65, 0.45);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 180, 216, 0.2);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        /* Custom scrollbar for presets */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-
-        /* 已解鎖卡片 Hover 效果 */
-        .unlocked-card {
-            position: relative;
-            overflow: hidden;
-            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .unlocked-card:hover {
-            transform: translateY(-6px) scale(1.02);
-            border-color: rgba(72, 202, 228, 0.8);
-            box-shadow: 0 0 20px rgba(0, 180, 216, 0.5), inset 0 0 15px rgba(0, 180, 216, 0.2);
-        }
-
-        /* 掃光效果 (Shimmer Effect) */
-        .unlocked-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 60%;
-            height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.15),
-                transparent
-            );
-            transition: 0.6s;
-            transform: skewX(-25deg);
-        }
-
-        .unlocked-card:hover::before {
-            left: 150%;
-        }
-
-        /* 未解鎖卡片 Hover 效果 (禁止/搖晃感) */
-        .locked-card {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.25s ease;
-            cursor: not-allowed;
-        }
-
-        .locked-card:hover {
-            border-color: rgba(239, 68, 68, 0.4);
-            background: rgba(30, 41, 59, 0.7);
-            animation: shake 0.4s ease-in-out;
-        }
-
-        .locked-card:hover .lock-icon {
-            transform: scale(1.2) rotate(12deg);
-            transition: transform 0.2s ease;
-        }
-
-        /* 搖晃動畫 */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-4px) rotate(-1deg); }
-            40% { transform: translateX(4px) rotate(1deg); }
-            60% { transform: translateX(-2px); }
-            80% { transform: translateX(2px); }
-        }
-
-        /* 大頭貼動態呼吸光環 */
-        .avatar-glow {
-            position: relative;
-        }
-
-        .avatar-glow::after {
-            content: '';
-            position: absolute;
-            inset: -4px;
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
             border-radius: 9999px;
-            background: linear-gradient(45deg, #00b4d8, #0077b6, #90e0ef);
-            z-index: -1;
-            filter: blur(8px);
-            opacity: 0.75;
-            animation: pulse-glow 3s infinite alternate;
         }
-
-        @keyframes pulse-glow {
-            0% { opacity: 0.5; filter: blur(6px); transform: scale(0.98); }
-            100% { opacity: 0.9; filter: blur(12px); transform: scale(1.02); }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
     </style>
 </head>
-<body class="text-slate-100 min-h-screen flex flex-col justify-between p-4 sm:p-6 md:p-10">
+<body class="bg-slate-950 text-slate-100 font-meme min-h-screen flex flex-col selection:bg-purple-500 selection:text-white">
 
-    <!-- Header / Profile 區塊 -->
-    <header class="max-w-4xl mx-auto w-full text-center mt-4 mb-8 sm:mb-12">
-        <div class="relative inline-block mb-4">
-            <div class="avatar-glow">
-                <img 
-                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300&auto=format&fit=crop" 
-                    alt="個人大頭貼" 
-                    class="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-2 border-cyan-400 shadow-2xl mx-auto"
-                    onerror="this.src='https://placehold.co/128x128/0077b6/ffffff?text=Avatar'"
-                >
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                    <i class="fa-solid fa-face-laugh-squint text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">MemeCraft 迷因產生器</h1>
+                    <p class="text-xs text-slate-400">作業三：前端網頁互動開發</p>
+                </div>
             </div>
-            <span class="absolute bottom-1 right-1 bg-cyan-500 text-slate-950 font-bold text-xs px-2.5 py-0.5 rounded-full border border-slate-900 shadow">
-                LV. 16
-            </span>
-        </div>
-
-        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-400 to-indigo-300 mb-2">
-            我的作品集 / Student Name
-        </h1>
-        <p class="text-sm sm:text-base text-cyan-200/80 font-medium tracking-wide max-w-md mx-auto">
-            🚀 網頁程式設計課程闖關地圖
-        </p>
-
-        <!-- 進度條條示 -->
-        <div class="mt-6 max-w-xs mx-auto glass-card p-2.5 rounded-2xl">
-            <div class="flex justify-between text-xs font-semibold text-cyan-300 mb-1.5 px-1">
-                <span>闖關進度</span>
-                <span>2 / 16 完成</span>
-            </div>
-            <div class="w-full bg-slate-800/80 rounded-full h-2.5 overflow-hidden p-0.5 border border-cyan-500/20">
-                <div class="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(0,180,216,0.8)]" style="width: 12.5%"></div>
+            <div class="flex items-center space-x-2">
+                <button onclick="triggerRandomMeme()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-purple-300 border border-purple-500/30 transition flex items-center space-x-1.5 shadow-sm">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span class="hidden sm:inline">隨機金句</span>
+                </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Section: 16 個任務關卡卡片 -->
-    <main class="max-w-6xl mx-auto w-full flex-grow mb-10">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Left Panel: Controls & Inputs (7 Columns) -->
+        <div class="lg:col-span-7 space-y-6">
+            
+            <!-- Step 1: Upload Image -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-bold tracking-wider text-purple-400 uppercase flex items-center space-x-2">
+                        <span class="w-6 h-6 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs">1</span>
+                        <span>選擇或上傳迷因底圖</span>
+                    </h2>
+                    <span class="text-xs text-slate-400">支援 JPG, PNG, WEBP</span>
+                </div>
 
-            <!-- Week 1 (已解鎖) -->
-            <a href="w1/index.html" class="unlocked-card glass-card p-5 rounded-2xl flex flex-col justify-between group">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold text-cyan-400 bg-cyan-950/80 border border-cyan-500/30 px-2.5 py-1 rounded-lg">
-                        WEEK 01
-                    </span>
-                    <span class="inline-flex items-center text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                <!-- Drag & Drop Upload Zone -->
+                <label id="drop-zone" class="border-2 border-dashed border-slate-700 hover:border-purple-500 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer bg-slate-950/50 hover:bg-purple-950/10 transition group">
+                    <div class="w-12 h-12 rounded-full bg-slate-800 group-hover:bg-purple-600/20 flex items-center justify-center text-slate-400 group-hover:text-purple-400 mb-2 transition">
+                        <i class="fa-solid fa-cloud-arrow-up text-xl"></i>
+                    </div>
+                    <span class="text-sm font-semibold text-slate-200 group-hover:text-purple-300">點擊上傳圖片 或 拖曳檔案至此</span>
+                    <span class="text-xs text-slate-500 mt-1">完全在本機運作，保障隱私安全</span>
+                    <input type="file" id="image-upload" accept="image/*" class="hidden">
+                </label>
+
+                <!-- Quick Presets -->
+                <div class="mt-4">
+                    <p class="text-xs font-semibold text-slate-400 mb-2">快速選擇熱門迷因底圖：</p>
+                    <div class="flex space-x-3 overflow-x-auto pb-2" id="preset-container">
+                        <!-- Preset items injected via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Text Inputs -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur">
+                <h2 class="text-sm font-bold tracking-wider text-purple-400 uppercase flex items-center space-x-2 mb-4">
+                    <span class="w-6 h-6 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs">2</span>
+                    <span>輸入迷因文字內容</span>
+                </h2>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Top Text -->
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-slate-300 flex justify-between">
+                            <span>上方文字 (Top Text)</span>
+                            <span id="top-char-count" class="text-slate-500 text-[10px]">0/50</span>
+                        </label>
+                        <input type="text" id="top-text-input" maxlength="50" placeholder="例如：當你以為DDL還很久..." 
+                            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition">
+                    </div>
+
+                    <!-- Bottom Text -->
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-slate-300 flex justify-between">
+                            <span>下方文字 (Bottom Text)</span>
+                            <span id="bottom-char-count" class="text-slate-500 text-[10px]">0/50</span>
+                        </label>
+                        <input type="text" id="bottom-text-input" maxlength="50" placeholder="例如：結果明天就要交作業" 
+                            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Style Sliders & Adjustments -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-bold tracking-wider text-purple-400 uppercase flex items-center space-x-2">
+                        <span class="w-6 h-6 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs">3</span>
+                        <span>樣式與進階微調</span>
+                    </h2>
+                    <button onclick="resetSliders()" class="text-xs text-slate-400 hover:text-purple-400 transition underline">重設預設值</button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <!-- Font Size Slider -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <span class="text-slate-300">文字大小 (Font Size)</span>
+                            <span id="font-size-val" class="text-purple-400 font-bold">32px</span>
+                        </div>
+                        <input type="range" id="font-size-slider" min="16" max="64" value="32" 
+                            class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500">
+                    </div>
+
+                    <!-- Text Vertical Position Slider -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <span class="text-slate-300">邊距縮排 (Padding)</span>
+                            <span id="padding-val" class="text-purple-400 font-bold">16px</span>
+                        </div>
+                        <input type="range" id="padding-slider" min="8" max="48" value="16" 
+                            class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Panel: Live Preview & Download (5 Columns) -->
+        <div class="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+            
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-2xl backdrop-blur flex flex-col items-center">
+                <div class="w-full flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-bold tracking-wider text-purple-400 uppercase flex items-center space-x-2">
+                        <i class="fa-solid fa-eye text-purple-400"></i>
+                        <span>即時預覽畫面</span>
+                    </h2>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
-                        已解鎖
+                        實時生成中
                     </span>
                 </div>
-                <div>
-                    <h3 class="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors duration-200">
-                        Week1 - 數位名片
-                    </h3>
-                    <p class="text-xs text-slate-400 mt-1">個人簡介與 HTML/CSS 基礎練習</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs font-medium text-cyan-400 group-hover:translate-x-1 transition-transform duration-200">
-                    <span>進入關卡</span>
-                    <span>➔</span>
-                </div>
-            </a>
 
-            <!-- Week 2 (已解鎖) -->
-            <a href="w2/index.html" class="unlocked-card glass-card p-5 rounded-2xl flex flex-col justify-between group">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold text-cyan-400 bg-cyan-950/80 border border-cyan-500/30 px-2.5 py-1 rounded-lg">
-                        WEEK 02
-                    </span>
-                    <span class="inline-flex items-center text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
-                        已解鎖
-                    </span>
+                <!-- Meme Canvas Container to Export -->
+                <div id="meme-canvas-wrapper" class="relative w-full aspect-square bg-slate-950 rounded-xl overflow-hidden border border-slate-800 shadow-inner flex items-center justify-center group">
+                    <!-- Background Image -->
+                    <img id="meme-image" src="https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800&auto=format&fit=crop" alt="Meme Base" class="w-full h-full object-cover">
+                    
+                    <!-- Top Text Overlay -->
+                    <div id="preview-top-text" class="meme-text absolute top-4 left-4 right-4 text-center px-2 break-words drop-shadow-md">
+                        這是一行上方文字
+                    </div>
+
+                    <!-- Bottom Text Overlay -->
+                    <div id="preview-bottom-text" class="meme-text absolute bottom-4 left-4 right-4 text-center px-2 break-words drop-shadow-md">
+                        這是一行下方文字
+                    </div>
+
+                    <!-- Watermark -->
+                    <div class="absolute bottom-1 right-2 text-[9px] text-white/40 font-mono tracking-tighter pointer-events-none">
+                        #MemeCraft
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors duration-200">
-                        Week2 - 今天吃甚麼？
-                    </h3>
-                    <p class="text-xs text-slate-400 mt-1">互動式選擇器與 JavaScript 應用</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs font-medium text-cyan-400 group-hover:translate-x-1 transition-transform duration-200">
-                    <span>進入關卡</span>
-                    <span>➔</span>
-                </div>
-            </a>
-<!-- Week 3 (已解鎖) -->
-<a href="w3/index.html" class="unlocked-card glass-card p-5 rounded-2xl flex flex-col justify-between group">
-    <div class="flex justify-between items-start mb-4">
-        <span class="text-xs font-bold text-cyan-400 bg-cyan-950/80 border border-cyan-500/30 px-2.5 py-1 rounded-lg">
-            WEEK 03
-        </span>
-        <span class="inline-flex items-center text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
-            已解鎖
-        </span>
+
+                <!-- Download & Share Action Button -->
+                <button onclick="downloadMeme()" id="download-btn" class="w-full mt-5 bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 hover:from-purple-500 hover:to-pink-400 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-purple-500/25 transition flex items-center justify-center space-x-2 transform active:scale-[0.98]">
+                    <i class="fa-solid fa-download text-lg"></i>
+                    <span>一鍵下載迷因圖片 (PNG)</span>
+                </button>
+                
+                <p class="text-[11px] text-slate-500 text-center mt-3">
+                    💡 提示：所有操作皆在您的瀏覽器本機完成，圖片與文字絕不上傳伺服器。
+                </p>
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer class="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500 mt-auto">
+        <p>MemeCraft Generator &copy; 2026 | 設計給富有幽默感的工程師與創作者</p>
+    </footer>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 bg-slate-900 border border-purple-500/50 text-slate-100 px-5 py-3 rounded-xl shadow-2xl transform translate-y-24 opacity-0 transition-all duration-300 flex items-center space-x-3">
+        <div id="toast-icon" class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div>
+            <p id="toast-title" class="text-xs font-bold text-white">操作成功</p>
+            <p id="toast-message" class="text-[11px] text-slate-400">迷因圖片已成功下載！</p>
+        </div>
     </div>
-    <div>
-        <h3 class="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors duration-200">
-            Week3 - 迷因產生器
-        </h3>
-        <p class="text-xs text-slate-400 mt-1">Canvas 繪圖與圖片下載互動練習</p>
-    </div>
-    <div class="mt-4 pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs font-medium text-cyan-400 group-hover:translate-x-1 transition-transform duration-200">
-        <span>進入關卡</span>
-        <span>➔</span>
-    </div>
-</a>
-            <!-- Week 4 ~ 16 (未解鎖) -->
-            <!-- JavaScript 會動態建立或是直接使用純 HTML 結構以方便調整 -->
-            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">
-                      
-                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-slate-400">Week 4 - 未解鎖</h3>
-                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
-                    <span>鎖定中</span><span>--</span>
-                </div>
-            </div>
 
-            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 05</span>
-                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-slate-400">Week 5 - 未解鎖</h3>
-                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
-                    <span>鎖定中</span><span>--</span>
-                </div>
-            </div>
+    <script>
+        // Preset meme base images
+        const presetImages = [
+            { name: "經典柴犬", url: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800&auto=format&fit=crop" },
+            { name: "思考貓咪", url: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=800&auto=format&fit=crop" },
+            { name: "程式設計", url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=800&auto=format&fit=crop" },
+            { name: "驚訝倉鼠", url: "https://images.unsplash.com/photo-1425082661705-1834bfd09dca?q=80&w=800&auto=format&fit=crop" },
+            { name: "科技未來", url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop" }
+        ];
 
-            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 06</span>
-                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-slate-400">Week 6 - 未解鎖</h3>
-                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
-                    <span>鎖定中</span><span>--</span>
-                </div>
-            </div>
+        // Random funny meme text combinations
+        const randomMemes = [
+            { top: "當你修好了一個Bug", bottom: "卻發現引發了十個新Bug" },
+            { top: "老闆：這個功能很簡單", bottom: "我：明天上線可以嗎？" },
+            { top: "以為今天能準時下班", bottom: "客戶：加個需求" },
+            { top: "程式碼能正常運行", bottom: "但我完全不知道為什麼" },
+            { top: "星期一早上的我", bottom: "靈魂已經先下班了" },
+            { top: "資深工程師的日常", bottom: "Ctrl+C 與 Ctrl+V 的藝術" }
+        ];
 
-            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 07</span>
-                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-slate-400">Week 7 - 未解鎖</h3>
-                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
-                    <span>鎖定中</span><span>--</span>
-                </div>
-            </div>
+        // DOM Elements
+        const imageUpload = document.getElementById('image-upload');
+        const memeImage = document.getElementById('meme-image');
+        const topTextInput = document.getElementById('top-text-input');
+        const bottomTextInput = document.getElementById('bottom-text-input');
+        const previewTopText = document.getElementById('preview-top-text');
+        const previewBottomText = document.getElementById('preview-bottom-text');
+        const topCharCount = document.getElementById('top-char-count');
+        const bottomCharCount = document.getElementById('bottom-char-count');
+        const fontSizeSlider = document.getElementById('font-size-slider');
+        const fontSizeVal = document.getElementById('font-size-val');
+        const paddingSlider = document.getElementById('padding-slider');
+        const paddingVal = document.getElementById('padding-val');
+        const presetContainer = document.getElementById('preset-container');
+        const memeCanvasWrapper = document.getElementById('meme-canvas-wrapper');
 
-            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 08</span>
-                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-slate-400">Week 8 - 未解鎖</h3>
-                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
-                    <span>鎖定中</span><span>--</span>
-                </div>
-            </div>
+        // Initialize preset buttons
+        function initPresets() {
+            presetContainer.innerHTML = '';
+            presetImages.forEach((preset, index) => {
+                const btn = document.createElement('button');
+                btn.className = "flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 border-slate-700 hover:border-purple-500 focus:outline-none transition group relative";
+                btn.innerHTML = `
+                    <img src="${preset.url}" alt="${preset.name}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-[10px] font-bold text-white px-1 text-center">
+                        ${preset.name}
+                    </div>
+                `;
+                btn.onclick = () => {
+                    memeImage.src = preset.url;
+                    showToast("切換底圖", `已載入 ${preset.name} 底圖`);
+                };
+                presetContainer.appendChild(btn);
+            });
+        }
 
-            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 09</span>
-                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-slate-400">Week 9 - 未解鎖</h3>
-                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
-                    <span>鎖定中</span><span>--</span>
-                </div>
-            </div>
+        // Handle File Upload via FileReader
+        imageUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    memeImage.src = event.target.result;
+                    showToast("上傳成功", "已成功讀取您的本機圖片！");
+                }
+                reader.readAsDataURL(file);
+            }
+        });
 
-            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 10</span>
-                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-slate-400">Week 10 - 未解鎖</h3>
-                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
-                    <span>鎖定中</span><span>--</span>
-                </div>
-            </div>
+        // Drag and Drop support
+        const dropZone = document.getElementById('drop-zone');
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-purple-500', 'bg-purple-950/20');
+            }, false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-purple-500', 'bg-purple-950/20');
+            }, false);
+        });
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                imageUpload.files = files;
+                const event = new Event('change');
+                imageUpload.dispatchEvent(event);
+            }
+        });
 
-            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 11</span>
-                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-slate-400">Week 11 - 未解鎖</h3>
-                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
-                    <span>鎖定中</span><span>--</span>
-                </div>
-            </div>
+        // Real-time Text Update & Character Counter
+        topTextInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            previewTopText.textContent = val;
+            topCharCount.textContent = `${val.length}/50`;
+        });
 
-            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 12</span>
-                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-slate-400">Week 12 - 未解鎖</h3>
-                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
-                    <span>鎖定中</span><span>--</span>
-                </div>
-            </div>
+        bottomTextInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            previewBottomText.textContent = val;
+            bottomCharCount.textContent = `${val.length}/50`;
+        });
 
-            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 13</span>
-                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-slate-400">Week 13 - 未解鎖</h3>
-                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
-                    <span>鎖定中</span><span>--</span>
-                </div>
-            </div>
+        // Sliders Control
+        fontSizeSlider.addEventListener('input', (e) => {
+            const size = e.target.value + 'px';
+            fontSizeVal.textContent = size;
+            previewTopText.style.fontSize = size;
+            previewBottomText.style.fontSize = size;
+        });
 
-            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 14</span>
-                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-slate-400">Week 14 - 未解鎖</h3>
-                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
-                    <span>鎖定中</span><span>--</span>
-                </div>
-            </div>
+        paddingSlider.addEventListener('input', (e) => {
+            const pad = e.target.value + 'px';
+            paddingVal.textContent = pad;
+            previewTopText.style.top = pad;
+            previewTopText.style.left = pad;
+            previewTopText.style.right = pad;
+            previewBottomText.style.bottom = pad;
+            previewBottomText.style.left = pad;
+            previewBottomText.style.right = pad;
+        });
 
-            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 15</span>
-                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-slate-400">Week 15 - 未解鎖</h3>
-                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">
-                    <span>鎖定中</span><span>--</span>
-                </div>
-            </div>
+        // Reset Sliders
+        function resetSliders() {
+            fontSizeSlider.value = 32;
+            fontSizeVal.textContent = "32px";
+            previewTopText.style.fontSize = "32px";
+            previewBottomText.style.fontSize = "32px";
 
-            <div class="locked-card p-5 rounded-2xl flex flex-col justify-between opacity-70">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold text-slate-500 bg-slate-900/80 border border-slate-700/40 px-2.5 py-1 rounded-lg">WEEK 16</span>
-                    <span class="lock-icon text-base transition-transform duration-200">🔒</span>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-slate-400">Week 16 - 期末專題</h3>
-                    <p class="text-xs text-slate-500 mt-1">任務尚未開啟</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-600">               
-                  <span>鎖定中</span><span>--</span>
-                </div>
-            </div>
+            paddingSlider.value = 16;
+            paddingVal.textContent = "16px";
+            previewTopText.style.top = "16px";
+            previewTopText.style.left = "16px";
+            previewTopText.style.right = "16px";
+            previewBottomText.style.bottom = "16px";
+            previewBottomText.style.left = "16px";
+            previewBottomText.style.right = "16px";
+            
+            showToast("重設成功", "樣式參數已恢復預設值");
+        }
 
+        // Random Meme Generator
+        function triggerRandomMeme() {
+            const randomItem = randomMemes[Math.floor(Math.random() * randomMemes.length)];
+            topTextInput.value = randomItem.top;
+            previewTopText.textContent = randomItem.top;
+            topCharCount.textContent = `${randomItem.top.length}/50`;
+
+            bottomTextInput.value = randomItem.bottom;
+            previewBottomText.textContent = randomItem.bottom;
+            bottomCharCount.textContent = `${randomItem.bottom.length}/50`;
+
+            // Also pick a random preset image
+            const randomPreset = presetImages[Math.floor(Math.random() * presetImages.length)];
+            memeImage.src = randomPreset.url;
+
+            showToast("隨機金句", "已隨機套用迷因金句與底圖！");
+        }
+
+        // Download Meme using html2canvas
+        function downloadMeme() {
+            const btn = document.getElementById('download-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-lg"></i><span>正在合成迷因...</span>`;
+            btn.disabled = true;
+
+            // Ensure image is fully loaded or crossOrigin handled
+            html2canvas(memeCanvasWrapper, {
+                useCORS: true,
+                allowTaint: true,
+                scale: 2, // High resolution output
+                backgroundColor: null
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `memecraft-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                showToast("下載成功", "迷因圖片已順利儲存至您的裝置！");
+            }).catch(err => {
+                console.error(err);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                showToast("下載失敗", "圖片跨域或渲染發生錯誤，請重新嘗試", true);
+            });
+        }
+
+        // Toast Notification Helper
+        function showToast(title, message, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastTitle = document.getElementById('toast-title');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+
+            if (isError) {
+                toastIcon.className = "w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs";
+                toastIcon.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i>`;
+            } else {
+              
         </div>
     </main>
