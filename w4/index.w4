@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>朋友對我的動態留言板</title>
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* ==========================================
+       CSS Variables & Reset
+       ========================================== */
+    :root {
+      --bg-primary: #F0F9FF;       /* 超極簡淺藍背景 */
+      --bg-card: #FFFFFF;          /* 純白卡片 */
+      --accent-blue: #38BDF8;      /* 明亮天藍點綴 */
+      --accent-soft: #BAE6FD;      /* 柔和淺藍 */
+      --text-main: #1E293B;        /* 深灰藍內文 */
+      --text-muted: #64748B;       /* 灰藍次要文字 */
+      --border-color: #E2E8F0;     /* 微弱邊框線 */
+      --shadow-sm: 0 4px 15px rgba(56, 189, 248, 0.06);
+      --shadow-hover: 0 12px 30px rgba(56, 189, 248, 0.15);
+      --radius: 16px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* ==========================================
+       Header Style
+       ========================================== */
+    header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.5px;
+      margin-bottom: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    header h1 i {
+      color: var(--accent-blue);
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      font-weight: 300;
+    }
+
+    /* ==========================================
+       Loading Animation
+       ========================================== */
+    #loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 0;
+    }
+
+    .spinner {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      margin-bottom: 20px;
+    }
+
+    .spinner div {
+      box-sizing: border-box;
+      display: block;
+      position: absolute;
+      width: 48px;
+      height: 48px;
+      margin: 6px;
+      border: 4px solid var(--accent-blue);
+      border-radius: 50%;
+      animation: spinner 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+      border-color: var(--accent-blue) transparent transparent transparent;
+    }
+
+    .spinner div:nth-child(1) { animation-delay: -0.45s; }
+    .spinner div:nth-child(2) { animation-delay: -0.3s; }
+    .spinner div:nth-child(3) { animation-delay: -0.15s; }
+
+    @keyframes spinner {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: var(--text-muted);
+      font-size: 1rem;
+      letter-spacing: 1px;
+      font-weight: 400;
+      animation: pulse 1.5s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    /* ==========================================
+       Masonry Layout (瀑布流排版)
+       ========================================== */
+    .masonry-grid {
+      column-count: 3;
+      column-gap: 24px;
+      display: none; /* 載入後透過 JS 開啟 */
+    }
+
+    /* 響應式斷點 */
+    @media (max-width: 992px) {
+      .masonry-grid { column-count: 2; }
+    }
+    @media (max-width: 600px) {
+      .masonry-grid { column-count: 1; }
+    }
+
+    /* ==========================================
+       Card Design
+       ========================================== */
+    .message-card {
+      break-inside: avoid;
+      background-color: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .message-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent-soft), var(--accent-blue));
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .message-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+      border-color: var(--accent-soft);
+    }
+
+    .message-card:hover::before {
+      opacity: 1;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .author-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: var(--bg-primary);
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border: 1px solid var(--accent-soft);
+    }
+
+    .author-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .timestamp {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .card-body {
+      color: var(--text-main);
+      font-size: 0.95rem;
+      word-wrap: break-word;
+      white-space: pre-line;
+    }
+
+    /* 錯誤提醒 */
+    .error-msg {
+      text-align: center;
+      color: #EF4444;
+      background: #FEF2F2;
+      padding: 20px;
+      border-radius: var(--radius);
+      border: 1px solid #FCA5A5;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1><i class="fa-regular !fa-comments"></i> 朋友對我的動態留言板</h1>
+      <p>收集來自四面八方的悄悄話</p>
+    </header>
+
+    <!-- 酷炫載入動畫 -->
+    <div id="loading">
+      <div class="spinner">
+        <div></div><div></div><div></div><div></div>
+      </div>
+      <div class="loading-text">讀取留言中...</div>
+    </div>
+
+    <!-- 錯誤處理訊息 -->
+    <div id="error" class="error-msg">
+      <i class="fa-solid fa-triangle-exclamation"></i> 留言載入失敗，請確認網址或權限設定。
+    </div>
+
+    <!-- 瀑布流留言列表 -->
+    <main id="board" class="masonry-grid"></main>
+  </div>
+
+  <script>
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQjivyEMjICy96ylrt9qnZPWKlKgfYT-6qs15bGlRugf57KRGd-fqhb0fX_3TrIIzw7SvslxdEq1pOa/pub?output=csv';
+
+    /**
+     * 強健的 CSV 解析器
+     * 正確處理包含逗號及換行符號的雙引號欄位
+     */
+    function parseCSV(text) {
+      const result = [];
+      let row = [];
+      let col = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i + 1];
+
+        if (char === '"') {
+          if (inQuotes && nextChar === '"') {
+            col += '"';
+            i++; // 跳過轉義引號
+          } else {
+            inQuotes = !inQuotes; // 切換引號狀態
+          }
+        } else if (char === ',' && !inQuotes) {
+          row.push(col.trim());
+          col = '';
+        } else if ((char === '\r' || char === '\n') && !inQuotes) {
+          if (char === '\r' && nextChar === '\n') {
+            i++; // 跳過 \r\n
+          }
+          row.push(col.trim());
+          if (row.length > 1 || row[0] !== '') {
+            result.push(row);
+          }
+          row = [];
+          col = '';
+        } else {
+          col += char;
+        }
+      }
+
+      if (col || row.length > 0) {
+        row.push(col.trim());
+        result.push(row);
+      }
+
+      return result;
+    }
+
+    /**
+     * 獲取頭像首字或預設圖標
+     */
+    function getAvatarText(name) {
+      if (!name || name === '匿名') return '友';
+      return name.trim().charAt(0).toUpperCase();
+    }
+
+    /**
+     * 讀取並渲染資料
+     */
+    async function fetchMessages() {
+      const loadingEl = document.getElementById('loading');
+      const boardEl = document.getElementById('board');
+      const errorEl = document.getElementById('error');
+
+      try {
+        const response = await fetch(CSV_URL);
+        if (!response.ok) throw new Error('網路回應異常');
+        
+        const csvText = await response.text();
+        const rawData = parseCSV(csvText);
+
+        // 過濾掉標頭欄位（第一行）
+        const rows = rawData.slice(1);
+
+        // 轉換為物件陣列
+        const messages = rows.map(row => ({
+          timestamp: row[0] || '',
+          name: row[1] || '匿名朋友',
+          content: row[2] || ''
+        })).filter(m => m.content !== ''); // 排除空白留言
+
+        // 隱藏載入動畫
+        loadingEl.style.display = 'none';
+
+        if (messages.length === 0) {
+          boardEl.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: var(--text-muted);">目前還沒有留言喔！</p>';
+          boardEl.style.display = 'block';
+          return;
+        }
+
+        // 渲染卡片
+        boardEl.innerHTML = messages.map(msg => `
+          <article class="message-card">
+            <div class="card-header">
+              <div class="author-info">
+                <div class="avatar">${getAvatarText(msg.name)}</div>
+                <span class="author-name">${escapeHTML(msg.name)}</span>
+              </div>
+              <time class="timestamp">${escapeHTML(msg.timestamp)}</time>
+            </div>
+            <div class="card-body">${escapeHTML(msg.content)}</div>
+          </article>
+        `).join('');
+
+        // 顯示瀑布流
+        boardEl.style.display = 'block';
+
+      } catch (err) {
+        console.error('Fetch Error:', err);
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+      }
+    }
+
+    /**
+     * 防止 XSS 攻擊轉義函數
+     */
+    function escapeHTML(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // 頁面載入完成後執行
+    document.addEventListener('DOMContentLoaded', fetchMessages);
+  </script>
+</body>
+</html>
